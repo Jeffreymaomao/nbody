@@ -29,7 +29,7 @@ const params = {
     numberOfPoints: 100000,
     pointSize: 1,
     periodSize: 120,
-    initialRadius: 15,
+    initialRadius: 30,
     initialVelocity: 10,
     approxNumParticles: 10000,
 }
@@ -117,7 +117,7 @@ const controller = {
     deltaT:    parametersFolder.add(params, 'deltaTime', 0.001, 0.05, 0.00001).name("Δt"),
     gravity:   parametersFolder.add(particleSystem, 'G', 0.0, 10.0).name("Gravity G"),
     pointSize: parametersFolder.add(points.material.uniforms.pointSize, 'value', 0.01, 5.0).name("Point Size"),
-    numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 10000).name('approxNum').onFinishChange(user.reset),
+    numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 50000).name('approxNum').onFinishChange(user.reset),
     // periodSize:      initialzeFolder.add(params, 'periodSize', 1, 1000.0).name('Systme Scale').onFinishChange(user.reset),
     initialRadius:   initialzeFolder.add(params, 'initialRadius', 1, 100.0).name('initial Radius').onFinishChange(user.reset),
     initialVelocity: initialzeFolder.add(params, 'initialVelocity', 1, 30.0).name('initial Velocity').onFinishChange(user.reset),
