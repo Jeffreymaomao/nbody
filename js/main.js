@@ -27,10 +27,10 @@ const initRotationSpeed = 3.0;
 const params = {
     deltaTime:  0.005,
     numberOfPoints: 100000,
-    pointSize: 1,
-    periodSize: 120,
-    initialRadius: 30,
-    initialVelocity: 10,
+    pointSize: 1.5,
+    periodSize: 50,
+    initialRadius: 20,
+    initialVelocity: 15,
     approxNumParticles: 10000,
 }
 // ------------------------------------------
@@ -46,7 +46,7 @@ const grapher = new Grapher({
     gui: true,
     guiWidth: 320
 });
-const boxEdge = grapher.addBoxEdge(params.periodSize);
+let boxEdge = grapher.addBoxEdge(params.initialRadius);
 
 // ------------------------------------------
 // initialize particles
@@ -55,9 +55,11 @@ const generateInitialPositionVelocity = (num) => {
     const velocityArray = new Array(num);
     for (let i = 0; i < num; i++) {
         const position     = generateRandomBall(params.initialRadius);
-        const randomVector = generateRandomBall(params.periodSize * 0.1)
+        const randomVector = generateRandomBall(params.periodSize * 0.3)
         const spiralVector = new THREE.Vector3(-position.y, position.x, 0.0).normalize();
-        const velocity     = spiralVector.multiplyScalar(params.initialVelocity).add(randomVector);
+
+        const scaleVelocity = params.initialVelocity * (position.length()/params.initialRadius)
+        const velocity      = spiralVector.multiplyScalar(scaleVelocity).add(randomVector);
         positionArray[i] = position;
         velocityArray[i] = velocity;
     }
@@ -66,11 +68,14 @@ const generateInitialPositionVelocity = (num) => {
 
 let points, particleSystem;
 const initializeNewParticleSystem = async () => {
-    console.log(points)
     if (points) {  // clear
         grapher.scene.remove(points);
         points.geometry.dispose(); points.material.dispose();
     }
+    if (boxEdge) { // clear 
+        grapher.scene.remove(boxEdge);
+    }
+    boxEdge = grapher.addBoxEdge(params.initialRadius*2.0);
     const [sizeX, sizeY] = determineTextureSize(params.approxNumParticles)
     const numParticles = sizeX * sizeY;
     const [positionArray, velocityArray] = generateInitialPositionVelocity(numParticles);
@@ -118,7 +123,7 @@ const controller = {
     gravity:   parametersFolder.add(particleSystem, 'G', 0.0, 10.0).name("Gravity G"),
     pointSize: parametersFolder.add(points.material.uniforms.pointSize, 'value', 0.01, 5.0).name("Point Size"),
     numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 50000).name('approxNum').onFinishChange(user.reset),
-    // periodSize:      initialzeFolder.add(params, 'periodSize', 1, 1000.0).name('Systme Scale').onFinishChange(user.reset),
+    periodSize:      initialzeFolder.add(params, 'periodSize', 1, 100.0).name('Length Scale').onFinishChange(user.reset),
     initialRadius:   initialzeFolder.add(params, 'initialRadius', 1, 100.0).name('initial Radius').onFinishChange(user.reset),
     initialVelocity: initialzeFolder.add(params, 'initialVelocity', 1, 30.0).name('initial Velocity').onFinishChange(user.reset),
 }
