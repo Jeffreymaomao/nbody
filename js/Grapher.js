@@ -11,7 +11,7 @@ class Grapher {
         cameraMaxDistance: 10
     }) {
         this.scene = new THREE.Scene();
-        this.axisLength = 1;
+        this.axisLength = config.axisLength || 1;
         this.axisLabels = [undefined, undefined, undefined];
 
         this.cameraMinDistance = config.cameraMinDistance || 1;
@@ -204,7 +204,7 @@ Grapher.prototype.addGPUPoints = async function (sizeX, sizeY, config = {}) {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const loadShader = async (url) => {
-        const res = await fetch(url);
+        const res = await fetch(url + `?t=${Date.now()}`);
         return await res.text();
     };
     const material = new THREE.ShaderMaterial({
@@ -212,6 +212,7 @@ Grapher.prototype.addGPUPoints = async function (sizeX, sizeY, config = {}) {
         fragmentShader: await loadShader('./js/shaders/particle-frag.glsl'),
         uniforms: {
             texturePosition: { value: null },
+            textureVelocity: { value: null },
             textureSize: { value: new THREE.Vector2(sizeX, sizeY) },
             pointSize: { value: config.size || 0.01 },
             color: { value: new THREE.Color(config.color || 0xffffff) }

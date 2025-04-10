@@ -4,49 +4,7 @@
 }
 
 @font-face {
-    font-family: 'CMR10';
-    src: url('font/cmr10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'CMSS10';
-    src: url('font/cmss10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'CMCS10';
-    src: url('font/cmcsc10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'CMTT10';
-    src: url('font/cmtt10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'CMU10';
-    src: url('font/cmu10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'CMTI10';
-    src: url('font/cmti10.ttf') format('truetype');
-    font-weight: normal;
-    font-style: italic;
-}
-
-@font-face {
-    font-family: 'cmcsc10';
+    font-family: 'CMBX10';
     src: url('font/cmbx10.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
@@ -59,7 +17,7 @@ body {
 }
 
 .CM {
-    font-family: 'CMCSC10', sans-serif;
+    font-family: 'CMBX10', sans-serif;
 }
 
 header {

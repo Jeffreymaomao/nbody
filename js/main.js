@@ -8,16 +8,16 @@ const user = {
 const rand = (min=0,max=1)=> {return (max-min)*Math.random()+min}
 // ------------------------------------------
 // number of points
-const approxNumParticles = 10000;
+const approxNumParticles = 15000;
 const sizeX = Math.floor(Math.sqrt(approxNumParticles));
 const sizeY = Math.ceil(approxNumParticles/sizeX);
 const numParticles = sizeX * sizeY;
 console.log(`Number of Particles: ${numParticles}`);
 // ------------------------------------------
 // physics parameters
-const periodSize = 50;
-const initRotationSpeed = 2;
-const deltaTime  = 0.001;
+const periodSize = 40;
+const initRotationSpeed = 3.0;
+const deltaTime  = 0.005;
 // ------------------------------------------
 // initialize grapher
 const grapher = new Grapher({
@@ -25,7 +25,8 @@ const grapher = new Grapher({
     defaultLight: true,
     directionalLight: false,
     cameraMinDistance: 1,
-    cameraMaxDistance: 100,
+    cameraMaxDistance: periodSize*10,
+    axisLength: periodSize/2 * 0.8,
     cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(periodSize),
 });
 grapher.addBoxEdge(periodSize);
@@ -76,7 +77,6 @@ window.addEventListener('keydown', (e) => {
     } else if (e.key === 'r') {
     } else if (e.key === 'ArrowRight') {
         if(!user.pause) return;
-        // particleSystem.update(deltaTime);
-        // grapher.syncInstancesWithParticles(particles);
+        particleSystem.update(deltaTime);
     }
 });

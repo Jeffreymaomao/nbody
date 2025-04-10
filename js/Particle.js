@@ -65,7 +65,7 @@ export class ParticleSystem {
 
     async initShader() {
         const loadShader = async (url) => {
-            const res = await fetch(url);
+            const res = await fetch(url + `?t=${Date.now()}`);
             return await res.text();
         };
         const velocityShader = await loadShader('./js/shaders/velocity.glsl');
@@ -90,7 +90,11 @@ export class ParticleSystem {
     updatePointsPosition() {
         this.points.material.uniforms.texturePosition.value
             = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
+
+        this.points.material.uniforms.textureVelocity.value
+            = this.gpuCompute.getCurrentRenderTarget(this.velocityVariable).texture;
     }
+
     update(dt) {
         if (!this.isReadyToCompute) return;
         this.velocityVariable.material.uniforms.deltaTime.value = dt;
