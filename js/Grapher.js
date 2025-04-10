@@ -8,7 +8,7 @@ class Grapher {
         defaultLight: false,
         directionalLight: false,
         cameraMinDistance: 1,
-        cameraMaxDistance: 10,
+        cameraMaxDistance: 10
     }) {
         this.scene = new THREE.Scene();
         this.axisLength = 1;
@@ -144,71 +144,91 @@ class Grapher {
     }
 }
 
-Grapher.prototype.addSphereInstances = function(particles, config={radius: 0.02, color: 0xffffff}) {
-    const count = particles.length;
-    const geometry = new THREE.SphereGeometry(config.radius, 16, 16);
-    const material = new THREE.MeshStandardMaterial({ color:config.color });
-    const instancedMesh = new THREE.InstancedMesh(geometry, material, count);
-    const dummy = new THREE.Object3D();
+Grapher.prototype.addBoxEdge = function(size, config={}) {
+    const boxLine = new THREE.LineSegments(
+        new THREE.EdgesGeometry(
+            new THREE.BoxGeometry(size, size, size)
+        ),
+        new THREE.LineBasicMaterial({
+            color: config.color || 0xffffff
+        })
+    );
 
-    for (let i = 0; i < count; i++) {
-        dummy.position.copy(particles[i].position);
-        dummy.updateMatrix();
-        instancedMesh.setMatrixAt(i, dummy.matrix);
-    }
-
-    instancedMesh.instanceMatrix.needsUpdate = true;
-    this.scene.add(instancedMesh);
-    this.instancedMesh = instancedMesh;
-    return instancedMesh;
+    this.scene.add(boxLine);
+    return boxLine;
 };
 
-Grapher.prototype.addPoints = function(pos, config={color: 0xffffff, size: 0.0001}) {
-    const geometry = new THREE.BufferGeometry();
-    const positionAttribute = new THREE.Float32BufferAttribute(pos, 3);
-    geometry.setAttribute('position', positionAttribute);
-    const material = new THREE.PointsMaterial({
-        color: config.color,
-        size: config.size
-    });
-    const points = new THREE.Points(geometry, material);
-    this.scene.add(points);
-    return {geometry,points}
-};
-
-Grapher.prototype.addLine = function(pos_i, pos_f, config={color: 0xffffff, linewidth: 1}) {
+Grapher.prototype.addLine = function(pos_i, pos_f, config={}) {
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(pos_i[0], pos_i[1], pos_i[2]),
         new THREE.Vector3(pos_f[0], pos_f[1], pos_f[2])
     ]);
+
     const lineMaterial = new THREE.LineBasicMaterial({
-        color: config.color,
-        linewidth: config.linewidth
+        color: config.color || 0xffffff,
+        linewidth: config.linewidth || 1
     });
+
     const line = new THREE.Line(lineGeometry, lineMaterial);
     this.scene.add(line);
+    return line;
 };
 
-Grapher.prototype.syncInstancesWithParticles = function(particles) {
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < particles.length; i++) {
-        dummy.position.copy(particles[i].position);
-        dummy.updateMatrix();
-        this.instancedMesh.setMatrixAt(i, dummy.matrix);
-    }
-    this.instancedMesh.instanceMatrix.needsUpdate = true;
-};
-
-Grapher.prototype.addBoxEdge = function(size, config={color:0xffffff}) {
-    const geometry = new THREE.BoxGeometry(size, size, size);
-    const edges = new THREE.EdgesGeometry(geometry);
-    const boxLine = new THREE.LineSegments(edges,
-        new THREE.LineBasicMaterial({
-            color: config.color
-        })
+Grapher.prototype.addPoints = function(numParticles, config={}) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position',
+        new THREE.Float32BufferAttribute(
+            new Float32Array(numParticles * 3), 3
+        )
     );
-    this.scene.add(boxLine);
-    return boxLine;
+
+    const material = new THREE.PointsMaterial({
+        color: config.color || 0xffffff,
+        size: config.size || 0.0001,
+        sizeAttenuation: true
+    });
+
+    const points = new THREE.Points(geometry, material);
+    this.scene.add(points);
+    return points;
+};
+
+Grapher.prototype.addGPUPoints = async function (sizeX, sizeY, config = {}) {
+    if (!sizeX || !sizeY) {
+        console.error("sizeX and sizeY must be defined");
+        return;
+    }
+    const numParticles = sizeX * sizeY;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(numParticles * 3); // dummy
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const loadShader = async (url) => {
+        const res = await fetch(url);
+        return await res.text();
+    };
+    const material = new THREE.ShaderMaterial({
+        vertexShader: await loadShader('./js/shaders/particle-vert.glsl'),
+        fragmentShader: await loadShader('./js/shaders/particle-frag.glsl'),
+        uniforms: {
+            texturePosition: { value: null },
+            textureSize: { value: new THREE.Vector2(sizeX, sizeY) },
+            pointSize: { value: config.size || 0.01 },
+            color: { value: new THREE.Color(config.color || 0xffffff) }
+        },
+        transparent: true
+    });
+
+    const points = new THREE.Points(geometry, material);
+    this.scene.add(points);
+
+    points.userData = {
+        sizeX: sizeX,
+        sizeY: sizeY,
+        numParticles: numParticles
+    };
+
+    return points;
 };
 
 export default Grapher;

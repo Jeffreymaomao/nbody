@@ -1,80 +1,82 @@
 import * as THREE from 'three';
 import Grapher from "./Grapher.js";
-import {Particle, ParticleSystem} from "./Particle.js";
+import {ParticleSystem} from "./Particle.js";
 
 const user = {
     pause: true,
 };
-const generateRandomVector= (scale)=> {
-    return new THREE.Vector3(
-        scale*(Math.random() - 0.5),
-        scale*(Math.random() - 0.5),
-        scale*(Math.random() - 0.5),
-    );
-}
+const rand = (min=0,max=1)=> {return (max-min)*Math.random()+min}
 // ------------------------------------------
-
-window.addEventListener('keydown', (e) => {
-    if (e.key === ' ') {
-        user.pause = !user.pause;
-    } else if (e.key === 'r') {
-        user.pause = false;
-        particles.forEach(p => {
-            p.position.set(generateRandomVector(periodSize));
-            p.velocity.set(generateRandomVector(0.5));
-        });
-    } else if (e.key === 'ArrowRight') {
-        if(!user.pause) return;
-        particleSystem.update(deltaTime);
-        grapher.syncInstancesWithParticles(particles);
-    }
-});
-
+// number of points
+const approxNumParticles = 10000;
+const sizeX = Math.floor(Math.sqrt(approxNumParticles));
+const sizeY = Math.ceil(approxNumParticles/sizeX);
+const numParticles = sizeX * sizeY;
+console.log(`Number of Particles: ${numParticles}`);
+// ------------------------------------------
+// physics parameters
+const periodSize = 50;
+const initRotationSpeed = 2;
+const deltaTime  = 0.001;
+// ------------------------------------------
+// initialize grapher
 const grapher = new Grapher({
     cameraPosition: new THREE.Vector3(2,2,2),
     defaultLight: true,
     directionalLight: false,
+    cameraMinDistance: 1,
+    cameraMaxDistance: 100,
+    cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(periodSize),
 });
+grapher.addBoxEdge(periodSize);
+// ------------------------------------------
+// initialize particles
 
-const numParticles =Math.pow(30,2);
-const particleRadius = 0.01;
-const periodSize = 3;
-const deltaTime = 0.001;
-
-const particles = [];
-for (let i = 0; i < numParticles; i++) {
-    const position = generateRandomVector(periodSize);
-    const rotateScale = 4;
-    const velocity = new THREE.Vector3(
-        -position.y*rotateScale,
-         position.x*rotateScale,
-        0.0
+const generateRandomVector= ()=> {
+    const scale  = periodSize * 0.3
+    const radius = scale * Math.pow(rand(0,1), 1/3);
+    const theta = Math.acos(rand(-1,1));
+    const phi   = rand(0, 2*Math.PI);
+    return new THREE.Vector3(
+        radius * Math.sin(theta) * Math.cos(phi),
+        radius * Math.sin(theta) * Math.sin(phi),
+        radius * Math.cos(theta)
     );
-    particles.push(new Particle(position, velocity, {
-         mass: 1.0,
-         radius: particleRadius
-    }));
 }
 
-const particleSystem = new ParticleSystem(particles, {
+const positionArray = new Array(numParticles);
+const velocityArray = new Array(numParticles);
+for (let i = 0; i < numParticles; i++) {
+    const position = generateRandomVector();
+    const velocity = new THREE.Vector3(-position.y,position.x,0.0)
+                        .multiplyScalar(initRotationSpeed)
+                        .add(generateRandomVector().multiplyScalar(0.1));
+    positionArray[i] = position;
+    velocityArray[i] = velocity;
+}
+
+const points = await grapher.addGPUPoints(sizeX, sizeY, {
+    size: 1.5,
+});
+const particleSystem = new ParticleSystem(points, positionArray, velocityArray, {
     periodSize: periodSize,
     renderer: grapher.renderer
 });
-grapher.addBoxEdge(periodSize);
-
-
-let particleMesh = null;
-window.addEventListener('DOMContentLoaded', () => {
-    particleMesh = grapher.addSphereInstances(particles, {
-        radius: particleRadius,
-        color: 0xffffff
-    });
-});
-
+// ------------------------------------------
+// start to animate
 grapher.animate = function() {
-    if(user.pause || !particleMesh) return;
+    if(user.pause) return;
     particleSystem.update(deltaTime);
-    this.syncInstancesWithParticles(particles);
 };
-
-window.grapher = grapher;
+// ------------------------------------------
+// keyboard events
+window.addEventListener('keydown', (e) => {
+    if (e.key === ' ') {
+        user.pause = !user.pause;
+    } else if (e.key === 'r') {
+    } else if (e.key === 'ArrowRight') {
+        if(!user.pause) return;
+        // particleSystem.update(deltaTime);
+        // grapher.syncInstancesWithParticles(particles);
+    }
+});

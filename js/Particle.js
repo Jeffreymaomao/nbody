@@ -1,60 +1,67 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
 import { GPUComputationRenderer } from 'three/addons/misc/GPUComputationRenderer.js';
 
-export class Particle {
-    constructor(
-        position, velocity, config={
-            mass:1.0, radius:0.02
-        }) {
-        this.position = position.clone();
-        this.velocity = velocity.clone();
-        this.mass = config.mass;
-        this.radius = config.radius;
-    }
-}
-
 export class ParticleSystem {
-    constructor(particles, config={
-        periodSize: undefined,
-        renderer: undefined,
-    }) {
-        this.renderer = config.renderer;
-        this.particles = particles;
+    constructor(
+        points,
+        initPositionArray,
+        initVelocityArray,
+        config={
+            periodSize: undefined,
+            renderer: undefined,
+        }
+    ) {
         this.G = 1.0;
         this.periodSize = config.periodSize || undefined;
-        this.numParticles = particles.length;
 
-        this.sizeX = Math.floor(Math.sqrt(this.numParticles));
-        this.sizeY = Math.ceil(this.numParticles / this.sizeX);
+        if(!points.userData.sizeX || !points.userData.sizeY) {
+            console.error('ParticleSystem: points must have sizeX and sizeY in userData');
+            return;
+        }
+        this.sizeX        = points.userData.sizeX;
+        this.sizeY        = points.userData.sizeY;
+        this.numParticles = points.userData.numParticles;
+
+        if(!config.renderer) {
+            console.error('ParticleSystem: renderer must be defined');
+            return;
+        }
+        this.renderer = config.renderer;
         this.gpuCompute = new GPUComputationRenderer(this.sizeX, this.sizeY, this.renderer);
-        this.gpuCompute.dataType = THREE.HalfFloatType;
-        this.positionTex = this.gpuCompute.createTexture();
-        this.velocityTex = this.gpuCompute.createTexture();
+        this.positionTexture = this.gpuCompute.createTexture();
+        this.velocityTexture = this.gpuCompute.createTexture();
         this.isReadyToCompute = false;
-        this.fillTexturesByParticles(this.positionTex, this.velocityTex, this.particles);
+
+        // initialize the textures
+        this.fillTexturesByQuantityArray(
+            [this.positionTexture, this.velocityTexture],
+            [initPositionArray,    initVelocityArray],
+            this.numParticles
+        );
+        this.points = points;
         this.initShader().then(() => {
             this.isReadyToCompute = true;
+            this.updatePointsPosition();
         });
     }
 
-    fillTexturesByParticles(posTex, velTex, particles) {
-        const posArray = posTex.image.data;
-        const velArray = velTex.image.data;
-        for (let i = 0; i < particles.length; i++) {
-            const p = particles[i];
+    fillTexturesByQuantityArray(textures = [], quantityArray = [], numParticles=0) {
+        if (textures.length != quantityArray.length) {
+            console.error('ParticleSystem: textures and quantityArray must have the same length');
+            return;
+        }
+        for (let i = 0; i < numParticles; i++) {
             const idx = i * 4;
-            posArray[idx+0] = p.position.x;
-            posArray[idx+1] = p.position.y;
-            posArray[idx+2] = p.position.z;
-            posArray[idx+3] = 1.0;
-
-            velArray[idx+0] = p.velocity.x;
-            velArray[idx+1] = p.velocity.y;
-            velArray[idx+2] = p.velocity.z;
-            velArray[idx+3] = 1.0;
+            for (let j = 0; j < textures.length; j++) {
+                const textureImageData = textures[j].image.data;
+                const quantityVector   = quantityArray[j];
+                textureImageData[idx+0] = quantityVector[i].x;
+                textureImageData[idx+1] = quantityVector[i].y;
+                textureImageData[idx+2] = quantityVector[i].z;
+                textureImageData[idx+3] = 1.0;
+            }
         }
     }
-
 
     async initShader() {
         const loadShader = async (url) => {
@@ -64,9 +71,8 @@ export class ParticleSystem {
         const velocityShader = await loadShader('./js/shaders/velocity.glsl');
         const positionShader = await loadShader('./js/shaders/position.glsl');
 
-        this.velocityVariable = this.gpuCompute.addVariable("textureVelocity", velocityShader, this.velocityTex);
-        this.positionVariable = this.gpuCompute.addVariable("texturePosition", positionShader, this.positionTex);
-
+        this.velocityVariable = this.gpuCompute.addVariable("textureVelocity", velocityShader, this.velocityTexture);
+        this.positionVariable = this.gpuCompute.addVariable("texturePosition", positionShader, this.positionTexture);
 
         this.velocityVariable.material.uniforms.deltaTime = { value: 1e-16 }; // initialize value
         this.velocityVariable.material.uniforms.G = { value: this.G };
@@ -81,30 +87,17 @@ export class ParticleSystem {
         }
     }
 
+    updatePointsPosition() {
+        this.points.material.uniforms.texturePosition.value
+            = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
+    }
     update(dt) {
         if (!this.isReadyToCompute) return;
         this.velocityVariable.material.uniforms.deltaTime.value = dt;
         this.positionVariable.material.uniforms.deltaTime.value = dt;
         this.gpuCompute.compute();
-
-        const renderTarget = this.gpuCompute.getCurrentRenderTarget(this.positionVariable);
-        const pixelBuffer = new Float32Array(this.sizeX * this.sizeY * 4);
-
-        this.renderer.readRenderTargetPixels(
-            renderTarget,
-            0, 0,
-            this.sizeX, this.sizeY,
-            pixelBuffer
-        );
-        for (let i = 0; i < this.particles.length; i++) {
-            const idx = i * 4;
-            this.particles[i].position.set(
-                pixelBuffer[idx + 0],
-                pixelBuffer[idx + 1],
-                pixelBuffer[idx + 2]
-            );
-        }
+        this.updatePointsPosition();
     }
 }
 
-export default { Particle, ParticleSystem };
+export default { ParticleSystem };
