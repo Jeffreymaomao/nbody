@@ -9,6 +9,7 @@ export class ParticleSystem {
         config={
             periodSize: undefined,
             renderer: undefined,
+            forceUpdateShader: false,
         }
     ) {
         this.G = 1.0;
@@ -39,9 +40,9 @@ export class ParticleSystem {
             this.numParticles
         );
         this.points = points;
-        this.initShader().then(() => {
+        this.initShader(config.forceUpdateShader).then(() => {
             this.isReadyToCompute = true;
-            this.updatePointsPosition();
+            this.updatePoints();
         });
     }
 
@@ -63,9 +64,9 @@ export class ParticleSystem {
         }
     }
 
-    async initShader() {
+    async initShader(forceUpdateShader) {
         const loadShader = async (url) => {
-            const res = await fetch(url + `?t=${Date.now()}`);
+            const res = await fetch(url+(forceUpdateShader?`?t=${Date.now()}`:''));
             return await res.text();
         };
         const velocityShader = await loadShader('./js/shaders/velocity.glsl');
@@ -87,20 +88,22 @@ export class ParticleSystem {
         }
     }
 
-    updatePointsPosition() {
+    updatePoints() {
+        // send the current position to the points material for update position
         this.points.material.uniforms.texturePosition.value
             = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
-
+        // send the current velocity to the points material for render color
         this.points.material.uniforms.textureVelocity.value
             = this.gpuCompute.getCurrentRenderTarget(this.velocityVariable).texture;
     }
 
     update(dt) {
         if (!this.isReadyToCompute) return;
+        this.velocityVariable.material.uniforms.G.value = this.G;
         this.velocityVariable.material.uniforms.deltaTime.value = dt;
         this.positionVariable.material.uniforms.deltaTime.value = dt;
         this.gpuCompute.compute();
-        this.updatePointsPosition();
+        this.updatePoints();
     }
 }
 
