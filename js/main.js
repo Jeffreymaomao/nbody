@@ -43,6 +43,7 @@ const grapher = new Grapher({
     cameraMaxDistance: 1000,
     axisLength: params.periodSize/2 * 0.8,
     cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(params.periodSize*0.6),
+    stats: true,
     gui: true,
     guiWidth: 320
 });

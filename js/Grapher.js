@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 class Grapher {
     constructor(config={
+        stats: false,
         gui:false,
         defaultLight: false,
         directionalLight: false,
@@ -24,6 +25,12 @@ class Grapher {
             this.gui = new dat.GUI({ autoPlace: false, width: guiWidth})
             this.gui.domElement.id = 'gui';
             document.querySelector('header').appendChild(this.gui.domElement);
+        }
+
+        if(config.stats) {
+            this.stats = Stats();
+            this.stats.domElement.id = 'stats';
+            document.querySelector('header').appendChild(this.stats.domElement);
         }
 
         if(config.defaultLight) {
@@ -139,6 +146,7 @@ class Grapher {
             this.controls.update();
             this.renderer.render(this.scene, this.camera);
             this.labelRenderer.render(this.scene, this.camera);
+            this.stats && this.stats.update();
         }
         animate();
     }
