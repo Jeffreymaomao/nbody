@@ -13,7 +13,7 @@ vec3 hsv2rgb(vec3 c) {
 void main() {
     vec4 vel_dens = texture2D(textureVelocity, vUv);
     float density = vel_dens.a / textureSize.x / textureSize.y;
-    float hue = density * 50.0;
-    vec3 rgb = hsv2rgb(vec3(hue, 0.8, 1.0));
+    float normDens = 0.5*(tanh(density*0.1+0.1)+1.0);
+    vec3 rgb = hsv2rgb(vec3(normDens, 1.0, 1.0));
     gl_FragColor = vec4(rgb, 1.0);
 }

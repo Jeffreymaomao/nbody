@@ -35,7 +35,8 @@ void main() {
             float invDist3 = invDist * invDist * invDist; // 1/|r1 - r2|^3
             
             // approximate density
-            density += invDist2;
+            // density += invDist2;
+            density += exp(-dist2 * 0.0001);
 
             // calculate force
             force -= delta * invDist3 * G; // F = -G * (r1 - r2) / |r1 - r2|^3

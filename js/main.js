@@ -28,8 +28,8 @@ const params = {
     deltaTime:  0.005,
     numberOfPoints: 100000,
     pointSize: 1.5,
-    periodSize: 50,
-    initialRadius: 20,
+    periodSize: 20,
+    initialRadius: 10,
     initialVelocity: 15,
     approxNumParticles: 10000,
 }
@@ -42,12 +42,13 @@ const grapher = new Grapher({
     cameraMinDistance: 1,
     cameraMaxDistance: 1000,
     axisLength: params.periodSize/2 * 0.8,
-    cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(params.periodSize*0.6),
+    cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(params.initialRadius*1.6),
     stats: true,
     gui: true,
     guiWidth: 320
 });
-let boxEdge = grapher.addBoxEdge(params.initialRadius);
+const boxEdge = grapher.addBoxEdge(params.initialRadius);
+const scaleBoxEdge = (s)=>{boxEdge.scale.set(s,s,s)};
 
 // ------------------------------------------
 // initialize particles
@@ -56,7 +57,7 @@ const generateInitialPositionVelocity = (num) => {
     const velocityArray = new Array(num);
     for (let i = 0; i < num; i++) {
         const position     = generateRandomBall(params.initialRadius);
-        const randomVector = generateRandomBall(params.periodSize * 0.3)
+        const randomVector = generateRandomBall(params.initialRadius * 0.5)
         const spiralVector = new THREE.Vector3(-position.y, position.x, 0.0).normalize();
 
         const scaleVelocity = params.initialVelocity * (position.length()/params.initialRadius)
@@ -73,16 +74,14 @@ const initializeNewParticleSystem = async () => {
         grapher.scene.remove(points);
         points.geometry.dispose(); points.material.dispose();
     }
-    if (boxEdge) { // clear 
-        grapher.scene.remove(boxEdge);
-    }
-    boxEdge = grapher.addBoxEdge(params.initialRadius*2.0);
+    scaleBoxEdge(params.periodSize);
     const [sizeX, sizeY] = determineTextureSize(params.approxNumParticles)
     const numParticles = sizeX * sizeY;
     const [positionArray, velocityArray] = generateInitialPositionVelocity(numParticles);
     points = await grapher.addGPUPoints(sizeX, sizeY, {
         size: params.pointSize,
     });
+    console.log(particleSystem)
     particleSystem = new ParticleSystem(points, positionArray, velocityArray, {
         periodSize: params.periodSize,
         renderer: grapher.renderer,
@@ -96,6 +95,10 @@ const user = {
     showBox: true,
     step: () => particleSystem.update(params.deltaTime),
     reset: () => initializeNewParticleSystem(),
+    changePointSize: (s) => {
+        points.material.uniforms.pointSize.value = s;
+        points.material.size = s;
+    }
 };
 // ------------------------------------------
 // start to animate
@@ -122,9 +125,9 @@ const controller = {
     reset: simulationFolder.add(user, 'reset').name("Reset"),
     deltaT:    parametersFolder.add(params, 'deltaTime', 0.001, 0.05, 0.00001).name("Δt"),
     gravity:   parametersFolder.add(particleSystem, 'G', 0.0, 10.0).name("Gravity G"),
-    pointSize: parametersFolder.add(points.material.uniforms.pointSize, 'value', 0.01, 5.0).name("Point Size"),
+    pointSize: parametersFolder.add(points.material.uniforms.pointSize, 'value', 0.01, 5.0).name("Point Size").onChange(user.changePointSize),
     numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 50000).name('approxNum').onFinishChange(user.reset),
-    periodSize:      initialzeFolder.add(params, 'periodSize', 1, 100.0).name('Length Scale').onFinishChange(user.reset),
+    periodSize:      initialzeFolder.add(params, 'periodSize', 1, 60.0).name('Length Scale').onFinishChange(user.reset).onChange(scaleBoxEdge),
     initialRadius:   initialzeFolder.add(params, 'initialRadius', 1, 100.0).name('initial Radius').onFinishChange(user.reset),
     initialVelocity: initialzeFolder.add(params, 'initialVelocity', 1, 30.0).name('initial Velocity').onFinishChange(user.reset),
 }

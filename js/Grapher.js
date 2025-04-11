@@ -81,7 +81,7 @@ class Grapher {
     }
 
     initCamera() {
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         this.camera.position.set(this.initCameraPosition.x, this.initCameraPosition.y, this.initCameraPosition.z);
         this.camera.up.set(0, 0, 1);
         this.camera.lookAt(0, 0, 0);
