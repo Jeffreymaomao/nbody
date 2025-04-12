@@ -9,7 +9,8 @@ void main() {
     vec3 pos = texture2D(texturePosition, uv).xyz;
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     vUv = uv; // this will be used in the fragment shader
-
     gl_Position = projectionMatrix * mvPosition;
+
+    float density = tanh(1.0);
     gl_PointSize = pointSize;
 }

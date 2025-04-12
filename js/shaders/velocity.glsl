@@ -42,7 +42,7 @@ void main() {
             force -= delta * invDist3 * G; // F = -G * (r1 - r2) / |r1 - r2|^3
         }
     }
-
+    density = density / textureSize.x / textureSize.y; // normalize
     vec3 newVel = selfVel.xyz + force * deltaTime * G;
     gl_FragColor = vec4(newVel, density);
 }
