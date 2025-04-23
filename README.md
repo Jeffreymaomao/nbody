@@ -1,1 +1,1 @@
-# Simple nbody simulation
+# nbody simulation
