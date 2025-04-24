@@ -225,7 +225,9 @@ Grapher.prototype.addGPUPoints = async function (sizeX, sizeY, config = {}) {
             pointSize: { value: config.size || 0.01 },
             color: { value: new THREE.Color(config.color || 0xffffff) }
         },
-        transparent: true
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
     });
 
     const points = new THREE.Points(geometry, material);
