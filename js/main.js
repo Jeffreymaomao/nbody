@@ -40,7 +40,7 @@ const grapher = new Grapher({
     defaultLight: true,
     directionalLight: false,
     cameraMinDistance: 1,
-    cameraMaxDistance: 1000,
+    cameraMaxDistance: 1500,
     axisLength: params.periodSize/2 * 0.8,
     cameraPosition: new THREE.Vector3(2,1,1).multiplyScalar(params.initialRadius*1.6),
     stats: true,
@@ -56,7 +56,7 @@ const generateInitialPositionVelocity = (num) => {
     const positionArray = new Array(num);
     const velocityArray = new Array(num);
     for (let i = 0; i < num; i++) {
-        const position     = generateRandomBall(params.initialRadius).multiply(new THREE.Vector3(2,1,1));
+        const position     = generateRandomBall(params.initialRadius);
         const randomVector = generateRandomBall(params.initialRadius * 0.5)
         const spiralVector = new THREE.Vector3(-position.y, position.x, 0.0).normalize();
 
@@ -98,6 +98,7 @@ const user = {
     changePointSize: (s) => {
         points.material.uniforms.pointSize.value = s;
         points.material.size = s;
+        params.pointSize = s;
     }
 };
 // ------------------------------------------
@@ -129,7 +130,7 @@ const controller = {
     numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 50000).name('approxNum').onFinishChange(user.reset),
     periodSize:      initialzeFolder.add(params, 'periodSize', 1, 60.0).name('Length Scale').onFinishChange(user.reset).onChange(scaleBoxEdge),
     initialRadius:   initialzeFolder.add(params, 'initialRadius', 1, 100.0).name('initial Radius').onFinishChange(user.reset),
-    initialVelocity: initialzeFolder.add(params, 'initialVelocity', 1, 30.0).name('initial Velocity').onFinishChange(user.reset),
+    initialVelocity: initialzeFolder.add(params, 'initialVelocity', 0, 30.0).name('initial Velocity').onFinishChange(user.reset),
 }
 
 simulationFolder.open();

@@ -26,13 +26,15 @@ void main() {
             // get other position
             vec2 uvOther  = (vec2(x, y) + 0.5) / textureSize;
             vec3 otherPos = texture2D(texturePosition, uvOther).xyz;
+
+            float spftening = 0.1;
             
             // calculate distance
-            vec3 delta     = selfPos.xyz - otherPos;      //  r1 - r2
-            float dist2    = dot(delta, delta) + 1e-8;    // |r1 - r2|^2
-            float invDist  = inversesqrt(dist2);          // 1/|r1 - r2|^1
-            float invDist2 = invDist * invDist;           // 1/|r1 - r2|^2
-            float invDist3 = invDist * invDist * invDist; // 1/|r1 - r2|^3
+            vec3 delta     = selfPos.xyz - otherPos;        //  r1 - r2
+            float dist2    = dot(delta, delta) + spftening; // |r1 - r2|^2
+            float invDist  = inversesqrt(dist2);            // 1/|r1 - r2|^1
+            float invDist2 = invDist * invDist;             // 1/|r1 - r2|^2
+            float invDist3 = invDist2 * invDist;            // 1/|r1 - r2|^3
             
             // approximate density
             // density += invDist2;

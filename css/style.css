@@ -82,8 +82,24 @@ h2 .big {
     transform: translate(0, 100%);
 }
 
+footer {
+    font-family: 'CMBX10';
+    font-size: 12pt;
+    vertical-align: middle;
 
+    position: fixed !important;
+    color: rgba(250,250,250,0.5);
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, -100%);
+    z-index: 1000;
+}
 
+footer span.copy-symb {
+    vertical-align: middle;
+    font-size: 13.5pt;
+    font-family: 'monospace';
+}
 
 
 
