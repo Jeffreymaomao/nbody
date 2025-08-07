@@ -30,7 +30,7 @@ const params = {
     pointSize: 1,
     periodSize: 20,
     initialRadius: 10,
-    initialVelocity: 15,
+    initialVelocity: 6,
     approxNumParticles: 10000,
 }
 // ------------------------------------------
@@ -68,6 +68,35 @@ const generateInitialPositionVelocity = (num) => {
     return [positionArray, velocityArray]
 }
 
+// initialize particles
+const initCollidingGalaxies = (num) => {
+    const offset = new THREE.Vector3(2*params.initialRadius, 0.0, 0.0);
+    const positionArray = new Array(num);
+    const velocityArray = new Array(num);
+    const mid = parseInt(num/2);
+    for (let i = 0; i < mid; i++) {
+        const position     = generateRandomBall(params.initialRadius);
+        const randomVector = generateRandomBall(params.initialRadius)
+        const spiralVector = new THREE.Vector3(-position.y, position.x, 0.0).normalize();
+
+        const scaleVelocity = params.initialVelocity * (position.length()/params.initialRadius);
+        const velocity      = spiralVector.multiplyScalar(scaleVelocity).add(randomVector);
+        positionArray[i] = position.add(offset);
+        velocityArray[i] = velocity;
+    }
+    for (let i = mid; i < num; i++) {
+        const position     = generateRandomBall(params.initialRadius);
+        const randomVector = generateRandomBall(params.initialRadius * 0.5)
+        const spiralVector = new THREE.Vector3(-position.y, position.x, 0.0).normalize();
+
+        const scaleVelocity = params.initialVelocity * (position.length()/params.initialRadius);
+        const velocity      = spiralVector.multiplyScalar(scaleVelocity).add(randomVector);
+        positionArray[i] = position.sub(offset);
+        velocityArray[i] = velocity;
+    }
+    return [positionArray, velocityArray]
+}
+
 let points, particleSystem;
 const initializeNewParticleSystem = async () => {
     if (points) {  // clear
@@ -78,7 +107,7 @@ const initializeNewParticleSystem = async () => {
     const [sizeX, sizeY] = determineTextureSize(params.approxNumParticles)
     const numParticles = sizeX * sizeY;
     console.log(`Real numParticles: ${sizeX} x ${sizeY} = ${numParticles}`);
-    const [positionArray, velocityArray] = generateInitialPositionVelocity(numParticles);
+    const [positionArray, velocityArray] = initCollidingGalaxies(numParticles);
     points = await grapher.addGPUPoints(sizeX, sizeY, {
         size: params.pointSize,
     });
@@ -127,7 +156,7 @@ const controller = {
     deltaT:    parametersFolder.add(params, 'deltaTime', 0.001, 0.05, 0.00001).name("Δt"),
     gravity:   parametersFolder.add(particleSystem, 'G', 0.0, 10.0).name("Gravity G"),
     pointSize: parametersFolder.add(points.material.uniforms.pointSize, 'value', 0.01, 10.0).name("Point Size").onChange(user.changePointSize),
-    numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 50000).name('approxNum').onFinishChange(user.reset),
+    numParticles:    initialzeFolder.add(params, 'approxNumParticles', 1, 1000000).name('approxNum').onFinishChange(user.reset),
     periodSize:      initialzeFolder.add(params, 'periodSize', 1, 60.0).name('Length Scale').onFinishChange(user.reset).onChange(scaleBoxEdge),
     initialRadius:   initialzeFolder.add(params, 'initialRadius', 1, 100.0).name('initial Radius').onFinishChange(user.reset),
     initialVelocity: initialzeFolder.add(params, 'initialVelocity', 0, 30.0).name('initial Velocity').onFinishChange(user.reset),

@@ -27,7 +27,7 @@ void main() {
             vec2 uvOther  = (vec2(x, y) + 0.5) / textureSize;
             vec3 otherPos = texture2D(texturePosition, uvOther).xyz;
 
-            float spftening = 0.1;
+            float spftening = 0.7;
             
             // calculate distance
             vec3 delta     = selfPos.xyz - otherPos;        //  r1 - r2
